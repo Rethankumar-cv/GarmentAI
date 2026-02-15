@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Customer Dashboard{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    canvas { max-height: 400px; }
+</style>
+<!-- ================= WELCOME ================= -->
+<div class="mb-4">
+    <h3 class="fw-semibold">
+        👋 Welcome, <span class="text-warning">{{ request.user.username }}</span>
+    </h3>
+    <p class="text-muted">Here’s your activity, spending trends & smart recommendations for today</p>
+</div>
+
+<!-- ================= SUMMARY CARDS ================= -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3 border-0 text-center">
+            <div class="text-muted mb-1">🧾 Orders Today</div>
+            <div class="fw-semibold fs-4">{{ purchases|length }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3 border-0 text-center">
+            <div class="text-muted mb-1">💰 Total Spent Today</div>
+            <div class="fw-semibold fs-4">₹{{ total_spent|default:"0.00" }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3 border-0 text-center">
+            <div class="text-muted mb-1">🏷 Top Category</div>
+            <div class="fw-semibold fs-4">{{ top_category|default:"N/A" }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3 border-0 text-center">
+            <div class="text-muted mb-1">✨ Suggested Products</div>
+            <div class="fw-semibold fs-4">{{ suggested_products|length }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= ORDERS TABLE ================= -->
+<div class="card shadow-sm mb-5 border-0">
+    <div class="card-header bg-dark text-warning fw-semibold">🛍️ Your Orders Today</div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Product</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in purchases %}
+                <tr>
+                    <td>{{ p.product__name }}</td>
+                    <td class="text-center">{{ p.total_quantity }}</td>
+                    <td class="text-end fw-semibold">₹{{ p.total_spent }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted py-4">No purchases today 🛒</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= SPENDING TREND CHART ================= -->
+<div class="card shadow-sm mb-5 border-0 p-4">
+    <h5 class="fw-semibold mb-3"><i class="fa-solid fa-chart-line text-warning"></i> Spending Trend Today</h5>
+    <canvas id="spendingChart"></canvas>
+</div>
+
+<!-- ================= CATEGORY SPENDING PIE ================= -->
+<div class="card shadow-sm mb-5 border-0 p-4">
+    <h5 class="fw-semibold mb-3"><i class="fa-solid fa-chart-pie text-warning"></i> Category Spending Today</h5>
+    <canvas id="categoryChart"></canvas>
+</div>
+
+
+<!-- ================= AI RECOMMENDATIONS ================= -->
+<div class="card shadow-sm mb-5 border-0 p-4 bg-dark text-warning">
+    <h5 class="fw-semibold mb-3"><i class="fa-solid fa-brain"></i> Smart Insights</h5>
+    <ul class="mb-0">
+        {% for r in recommendations %}
+            <li>🤖 {{ r }}</li>
+        {% empty %}
+            <li>No insights available yet</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- ================= STYLES ================= -->
+<style>
+.product-card { transition: transform 0.25s ease, box-shadow 0.25s ease; border-radius: 14px; }
+.product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
+.card-header { border-radius: 12px 12px 0 0; }
+</style>
+
+<!-- ================= CHART SCRIPTS ================= -->
+<script>
+const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+new Chart(spendingCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ spending_labels|safe }},
+        datasets: [{
+            label: 'Total Spent (₹)',
+            data: {{ spending_data|safe }},
+            backgroundColor: 'rgba(255,193,7,0.6)',
+            borderColor: 'rgba(255,193,7,1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ category_labels|safe }},
+        datasets: [{
+            data: {{ category_data|safe }},
+            backgroundColor: ['#ffc107','#0d6efd','#198754','#dc3545','#6610f2'],
+            borderWidth: 2
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Garment Geo Intelligence</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body{
+    background:linear-gradient(135deg,#eef2ff,#f8fafc);
+    font-family:'Poppins',sans-serif;
+}
+.glass{
+    background:rgba(255,255,255,.96);
+    backdrop-filter:blur(14px);
+    border-radius:20px;
+    box-shadow:0 12px 35px rgba(0,0,0,.08);
+}
+.fade-in{
+    animation:fadeUp .6s ease forwards;
+}
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(25px)}
+    to{opacity:1;transform:none}
+}
+#map{
+    height:380px;
+    border-radius:16px;
+}
+.info-card{
+    transition:.35s ease;
+}
+.info-card:hover{
+    transform:translateY(-6px) scale(1.02);
+}
+</style>
+</head>
+
+<body>
+
+{% include "navbar.html" %}
+
+<div class="container mt-4">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h3 class="fw-bold text-primary">
+    <i class="fa-solid fa-shirt"></i> Garment Geo Intelligence Dashboard
+</h3>
+
+    <span class="badge bg-success px-3 py-2">
+    <i class="fa-solid fa-location-crosshairs"></i> Garment Outlet Active
+</span>
+
+</div>
+
+<div class="row g-4">
+
+<!-- LOCATION INFO -->
+<div class="col-lg-4">
+    <div class="glass p-4 h-100 fade-in">
+        <h5 class="fw-bold mb-3">
+            <i class="fa-solid fa-map-pin text-danger"></i> Garment Store Location
+
+        </h5>
+
+        <div class="info-card p-3 border rounded mb-3">
+            <i class="fa-solid fa-city text-primary me-2"></i>
+            <strong>City:</strong> {{ geo.city|default:"N/A" }}
+        </div>
+
+        <div class="info-card p-3 border rounded mb-3">
+            <i class="fa-solid fa-location-dot text-success me-2"></i>
+            <strong>Latitude:</strong> {{ geo.lat|default:"0" }}
+        </div>
+
+        <div class="info-card p-3 border rounded">
+            <i class="fa-solid fa-location-dot text-warning me-2"></i>
+            <strong>Longitude:</strong> {{ geo.lng|default:"0" }}
+        </div>
+
+        <p class="text-muted small mt-3">
+    Garment geo intelligence helps analyze regional fashion demand,
+    logistics cost, and outlet expansion strategy.
+</p>
+
+    </div>
+</div>
+
+<!-- MAP -->
+<div class="col-lg-8">
+    <div class="glass p-4 fade-in">
+        <h5 class="fw-bold mb-3">
+    <i class="fa-solid fa-map-location-dot text-primary"></i>
+    Interactive Garment Store Map
+</h5>
+
+        <div id="map"></div>
+    </div>
+</div>
+
+</div>
+
+
+
+</div>
+
+<!-- MAP SCRIPT -->
+<script>
+const mapData = JSON.parse('{{ map_data|escapejs }}');
+
+const map = L.map('map').setView([mapData.lat, mapData.lng], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+L.marker([mapData.lat, mapData.lng])
+    .addTo(map)
+    .bindPopup(`<b>${mapData.city}</b><br>Store Location`)
+    .openPopup();
+</script>
+
+</body>
+</html>

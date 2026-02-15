@@ -1,0 +1,8 @@
+<h2>📊 Sales Dashboard</h2>
+
+<p>Total Revenue: ₹{{ total_sales }}</p>
+<p>Total Orders: {{ total_orders }}</p>
+
+{% if best_product %}
+<p>Top Product: {{ best_product.product__name }}</p>
+{% endif %}

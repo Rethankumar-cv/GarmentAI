@@ -1,0 +1,233 @@
+{% extends "owner/base.html" %}
+{% load static %}
+
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ================= GLOBAL ================= */
+.page-wrapper {
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ================= TITLES ================= */
+.page-title {
+    font-weight: 600;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title {
+    font-weight: 600;
+    margin: 45px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ================= STATS ================= */
+.stat-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.stat-title {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* ================= TABLE CARD ================= */
+.table-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+/* ================= TABLE ================= */
+.table thead {
+    background: #111;
+    color: #ffc107;
+}
+
+.table thead th {
+    border: none;
+    font-weight: 500;
+    padding: 14px;
+}
+
+.table tbody td {
+    padding: 14px;
+}
+
+.table tbody tr:hover {
+    background: rgba(255,193,7,0.07);
+}
+
+/* ================= BADGES ================= */
+.badge-orders {
+    background: rgba(13,110,253,0.15);
+    color: #0d6efd;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.badge-spent {
+    background: rgba(25,135,84,0.15);
+    color: #198754;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* ================= AI CARD ================= */
+.ai-card {
+    background: linear-gradient(135deg, #111, #1f1f1f);
+    border-radius: 20px;
+    padding: 25px;
+    color: #fff;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.ai-card li {
+    list-style: none;
+    background: rgba(255,193,7,0.15);
+    color: #ffc107;
+    padding: 12px 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+/* ================= EMPTY ================= */
+.empty-text {
+    text-align: center;
+    color: #999;
+    padding: 30px 0;
+}
+</style>
+
+<div class="page-wrapper">
+
+<!-- ================= TITLE ================= -->
+<h3 class="page-title">
+    <i class="fa-solid fa-users text-warning"></i>
+    Customers Analytics
+</h3>
+
+<!-- ================= STATS ================= -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-title">Total Customers</div>
+            <div class="stat-value">{{ total_customers }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-title">High Value Customers</div>
+            <div class="stat-value text-success">{{ high_value }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-title">Top Buyer Spend</div>
+            <div class="stat-value">₹{{ chart_data.0|default:"0" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= TABLE ================= -->
+<h5 class="section-title">
+    <i class="fa-solid fa-list text-warning"></i>
+    Customer Leaderboard
+</h5>
+
+<div class="table-card table-responsive mb-5">
+<table class="table align-middle">
+<thead>
+<tr>
+    <th>Customer</th>
+    <th>Orders</th>
+    <th>Total Spent</th>
+</tr>
+</thead>
+<tbody>
+{% for c in customers %}
+<tr>
+    <td>{{ c.customer__username }}</td>
+    <td><span class="badge-orders">{{ c.total_orders }}</span></td>
+    <td><span class="badge-spent">₹{{ c.total_spent }}</span></td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3" class="empty-text">No customers yet</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<!-- ================= CHART + AI ================= -->
+<h5 class="section-title">
+    <i class="fa-solid fa-chart-bar text-warning"></i>
+    Spending Insights
+</h5>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="table-card mb-4">
+            <canvas id="customerChart"></canvas>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="ai-card">
+            <h6 class="mb-3">🤖 AI Recommendations</h6>
+            <ul class="mb-0">
+                {% for r in recommendations %}
+                    <li>{{ r }}</li>
+                {% empty %}
+                    <li>No AI insights available yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+new Chart(document.getElementById("customerChart"), {
+    type: "bar",
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: "Total Spent (₹)",
+            data: {{ chart_data|safe }},
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+</script>
+
+{% endblock %}

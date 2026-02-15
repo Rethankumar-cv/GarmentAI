@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auth | Garment Insights AI</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+
+    body {
+      background: url("{% static 'img/digital-art-style-illustration-fashion-designer.jpg' %}") no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 60px 20px;
+    }
+
+    /* Main Container */
+    .auth-container {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    /* Auth Box */
+    .auth-box {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 25px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 500px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .auth-box:hover { transform: translateY(-5px); box-shadow: 0 35px 60px rgba(0,0,0,0.3); }
+    h2 { font-weight: 600; color: #333; margin-bottom: 10px; text-align: center; }
+    p.subtitle { font-size: 14px; color: #555; margin-bottom: 25px; text-align: center; }
+
+    /* Tabs */
+    .tabs { display: flex; justify-content: space-around; margin-bottom: 25px; border-bottom: 1px solid #eee; }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      cursor: pointer;
+      font-weight: 500;
+      color: #777;
+      border-bottom: 3px solid transparent;
+      transition: all 0.4s ease;
+    }
+    .tab.active { color: #667eea; border-bottom: 3px solid #667eea; font-weight: 600; }
+
+    /* Forms */
+    form { display: none; flex-direction: column; gap: 15px; }
+    form.active { display: flex; }
+    input {
+      padding: 12px 15px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 12px rgba(102,126,234,0.25);
+      outline: none;
+    }
+
+    button {
+      padding: 14px 28px;
+      border-radius: 30px;
+      border: none;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(102,126,234,0.45);
+      transition: all 0.35s ease;
+    }
+    button:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 16px 35px rgba(102,126,234,0.6); }
+
+    .messages { color: #ff4d4f; font-size: 14px; text-align: center; margin-bottom: 10px; }
+
+    /* Role Cards */
+    .roles-container {
+      display: flex;
+      width: 100%;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .role-box {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 25px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .role-box:hover { transform: translateY(-5px); box-shadow: 0 35px 60px rgba(0,0,0,0.3); }
+    .role-box h2 { font-weight: 600; color: #333; margin-bottom: 10px; }
+    .role-box p.subtitle { font-size: 14px; color: #555; margin-bottom: 20px; }
+    .role-tabs { display: flex; flex-direction: column; gap: 15px; }
+    .role-tab {
+      padding: 12px 20px;
+      border-radius: 25px;
+      background: #eee;
+      color: #555;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .role-tab:hover {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+    .role-tab i { font-size: 16px; }
+
+    /* Responsive */
+    @media (max-width: 1000px) { .roles-container { flex-direction: column; align-items: center; } }
+    @media (max-width: 480px) { .auth-box, .role-box { width: 90%; padding: 25px 20px; } }
+
+  </style>
+</head>
+<body>
+
+  <div class="auth-container">
+
+    <!-- Top Form -->
+    <div class="auth-box">
+      <h2><i class="fa-solid fa-shield-halved"></i> Garment Insights AI</h2>
+      <p class="subtitle">Login or create your account to manage your garment insights projects.</p>
+
+      <div class="tabs">
+        <div class="tab {% if active_tab == 'login' %}active{% endif %}" onclick="showForm('login')">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </div>
+        <div class="tab {% if active_tab == 'register' %}active{% endif %}" onclick="showForm('register')">
+          <i class="fa-solid fa-user-plus"></i> Register
+        </div>
+      </div>
+
+      {% for message in messages %}
+        <div class="messages">{{ message }}</div>
+      {% endfor %}
+
+      <form method="POST" class="{% if active_tab == 'login' %}active{% endif %}" id="login">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="login">
+        <input type="text" name="username" placeholder="Username" required autocomplete="off">
+        <input type="password" name="password" placeholder="Password" required autocomplete="off">
+        <button type="submit"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+      </form>
+
+      <form method="POST" class="{% if active_tab == 'register' %}active{% endif %}" id="register">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="register">
+        <input type="text" name="username" placeholder="Username" required autocomplete="off">
+        <input type="email" name="email" placeholder="Email" required autocomplete="off">
+        <input type="password" name="password" placeholder="Password" required autocomplete="off">
+        <button type="submit"><i class="fa-solid fa-user-plus"></i> Register</button>
+      </form>
+    </div>
+
+    <!-- Bottom Two Cards Side by Side -->
+    <div class="roles-container">
+      <!-- Customer -->
+      <div class="role-box">
+        <h2><i class="fa-solid fa-users"></i> Customer</h2>
+        <p class="subtitle">Explore garment insights and enhance your fashion experience.</p>
+        <div class="role-tabs">
+          <a href="{% url 'customer_register' %}" class="role-tab"><i class="fa-solid fa-user-plus"></i> Customer Register</a>
+          <a href="{% url 'customer_login' %}" class="role-tab"><i class="fa-solid fa-right-to-bracket"></i> Customer Login</a>
+        </div>
+      </div>
+
+      <!-- Owner -->
+      <div class="role-box">
+        <h2><i class="fa-solid fa-user-shield"></i> Owner</h2>
+        <p class="subtitle">Manage your boutique and products efficiently with the owner portal.</p>
+        <div class="role-tabs">
+          <a href="{% url 'owner_register' %}" class="role-tab"><i class="fa-solid fa-user-plus"></i> Owner Register</a>
+          <a href="{% url 'owner_login' %}" class="role-tab"><i class="fa-solid fa-right-to-bracket"></i> Owner Login</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showForm(form) {
+      document.getElementById('login').classList.remove('active');
+      document.getElementById('register').classList.remove('active');
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+      document.getElementById(form).classList.add('active');
+      document.querySelectorAll('.tab').forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(form)) tab.classList.add('active');
+      });
+    }
+  </script>
+</body>
+</html>

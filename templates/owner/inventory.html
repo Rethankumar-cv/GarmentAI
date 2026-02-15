@@ -1,0 +1,237 @@
+{% extends "owner/base.html" %}
+{% load static %}
+
+{% block title %}Inventory Intelligence{% endblock %}
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ================= WRAPPER ================= */
+.inventory-wrapper {
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ================= TITLES ================= */
+.page-title {
+    font-weight: 600;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title {
+    font-weight: 600;
+    margin: 40px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ================= CARD ================= */
+.inventory-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+
+/* ================= METRICS ================= */
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: rgba(255,193,7,0.08);
+    margin-bottom: 14px;
+}
+
+.metric:last-child {
+    margin-bottom: 0;
+}
+
+.metric-label {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.metric-value {
+    font-weight: 600;
+}
+
+/* ================= BADGES ================= */
+.badge-risk {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.badge-low { background: #198754; color: #fff; }
+.badge-medium { background: #ffc107; color: #000; }
+.badge-high { background: #dc3545; color: #fff; }
+
+/* ================= ALERT CARDS ================= */
+.alert-card {
+    border-radius: 16px;
+    padding: 18px;
+    background: #f8f9fa;
+    height: 100%;
+}
+
+.alert-card h6 {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.alert-card ul {
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.alert-card li {
+    list-style: none;
+    padding: 6px 0;
+    font-size: 14px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .metric {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
+</style>
+
+<div class="inventory-wrapper">
+
+    <!-- ================= TITLE ================= -->
+    <h3 class="page-title">
+        <i class="fa-solid fa-boxes-stacked text-warning"></i>
+        Inventory Intelligence
+    </h3>
+
+    <!-- ================= CORE METRICS ================= -->
+    <div class="inventory-card">
+        <div class="metric">
+            <span class="metric-label">📊 Daily Sales</span>
+            <span class="metric-value">{{ inventory.daily_sales }}</span>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">🛡 Safety Stock</span>
+            <span class="metric-value">{{ inventory.safety_stock }}</span>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">🔄 Reorder Point</span>
+            <span class="metric-value">{{ inventory.reorder_point }}</span>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">📦 EOQ</span>
+            <span class="metric-value">{{ inventory.economic_order_quantity }}</span>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">⚠ Stockout Risk</span>
+            <span class="badge-risk
+                {% if inventory.stockout_risk == 'High' %} badge-high
+                {% elif inventory.stockout_risk == 'Medium' %} badge-medium
+                {% else %} badge-low
+                {% endif %}">
+                {{ inventory.stockout_risk }}
+            </span>
+        </div>
+    </div>
+
+    <!-- ================= ALERTS ================= -->
+    <h5 class="section-title">
+        <i class="fa-solid fa-triangle-exclamation text-warning"></i>
+        Smart Inventory Alerts
+    </h5>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="alert-card">
+                <h6>📉 Dead Stock</h6>
+                <ul>
+                    {% for p in dead_stock %}
+                        <li>{{ p.name }}</li>
+                    {% empty %}
+                        <li class="text-muted">No dead stock</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="alert-card">
+                <h6>🔥 Fast Moving</h6>
+                <ul>
+                    {% for p in fast_moving %}
+                        <li>{{ p.name }}</li>
+                    {% empty %}
+                        <li class="text-muted">No fast movers</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="alert-card">
+                <h6>📦 Reorder Alerts</h6>
+                <ul>
+                    {% for p in reorder_alerts %}
+                        <li>{{ p.name }} ({{ p.stock }})</li>
+                    {% empty %}
+                        <li class="text-muted">Stock healthy</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TREND CHART ================= -->
+    <h5 class="section-title">
+        <i class="fa-solid fa-chart-line text-warning"></i>
+        Inventory Trend
+    </h5>
+
+    <div class="inventory-card">
+        <canvas id="inventoryTrend"></canvas>
+    </div>
+
+</div>
+
+<script>
+new Chart(document.getElementById("inventoryTrend"), {
+    type: "line",
+    data: {
+        labels: {{ trend_labels|safe }},
+        datasets: [{
+            label: "Monthly Sales",
+            data: {{ trend_data|safe }},
+            tension: 0.4,
+            fill: true,
+            borderWidth: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+</script>
+
+{% endblock %}
