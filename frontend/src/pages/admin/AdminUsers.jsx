@@ -21,7 +21,7 @@ const AdminUsers = () => {
         const token = localStorage.getItem('admin_token');
         if (!token) return;
         try {
-            const response = await axios.get('http://localhost:8000/api/admin/users/', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/users/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setUsers(response.data);
@@ -53,7 +53,7 @@ const AdminUsers = () => {
     const handleSave = async () => {
         const token = localStorage.getItem('admin_token');
         try {
-            await axios.put(`http://localhost:8000/api/admin/users/${selectedUser.id}/`, formData, {
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/users/${selectedUser.id}/`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setNotification({ open: true, message: 'User updated successfully', severity: 'success' });
@@ -70,7 +70,7 @@ const AdminUsers = () => {
 
         const token = localStorage.getItem('admin_token');
         try {
-            await axios.delete(`http://localhost:8000/api/admin/users/${id}/`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/users/${id}/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setNotification({ open: true, message: 'User deleted successfully', severity: 'success' });

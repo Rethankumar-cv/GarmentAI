@@ -25,7 +25,7 @@ const AdminLogin = () => {
 
         try {
             // Using direct axios call to the new admin endpoint
-            const response = await axios.post('http://localhost:8000/api/admin/login/', formData);
+            const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/login/`, formData);
 
             if (response.data.access) {
                 // Store token differently to avoid conflict with user session if testing on same browser

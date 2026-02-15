@@ -19,7 +19,7 @@ const AdminDashboard = () => {
                 const token = localStorage.getItem('admin_token');
                 if (!token) return;
 
-                const response = await axios.get('http://localhost:8000/api/admin/stats/', {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/stats/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setStats(response.data);

@@ -16,7 +16,7 @@ const AdminOrders = () => {
         const token = localStorage.getItem('admin_token');
         if (!token) return;
         try {
-            const response = await axios.get('http://localhost:8000/api/admin/orders/', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/orders/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setOrders(response.data);
@@ -39,7 +39,7 @@ const AdminOrders = () => {
 
         const token = localStorage.getItem('admin_token');
         try {
-            await axios.delete(`http://localhost:8000/api/admin/orders/${id}/`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/orders/${id}/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setNotification({ open: true, message: 'Order deleted successfully', severity: 'success' });

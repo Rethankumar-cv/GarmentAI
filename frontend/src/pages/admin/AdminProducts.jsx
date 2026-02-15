@@ -34,7 +34,7 @@ const AdminProducts = () => {
         const token = localStorage.getItem('admin_token');
         if (!token) return;
         try {
-            const response = await axios.get('http://localhost:8000/api/admin/products/', {
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/products/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setProducts(response.data);
@@ -88,13 +88,13 @@ const AdminProducts = () => {
         try {
             if (selectedProduct) {
                 // Update
-                await axios.put(`http://localhost:8000/api/admin/products/detail/${selectedProduct.id}/`, formData, {
+                await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/products/detail/${selectedProduct.id}/`, formData, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setNotification({ open: true, message: 'Product updated successfully', severity: 'success' });
             } else {
                 // Create
-                await axios.post('http://localhost:8000/api/admin/products/', formData, {
+                await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/products/`, formData, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setNotification({ open: true, message: 'Product created successfully', severity: 'success' });
@@ -112,7 +112,7 @@ const AdminProducts = () => {
 
         const token = localStorage.getItem('admin_token');
         try {
-            await axios.delete(`http://localhost:8000/api/admin/products/detail/${id}/`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/'}admin/products/detail/${id}/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setNotification({ open: true, message: 'Product deleted successfully', severity: 'success' });
