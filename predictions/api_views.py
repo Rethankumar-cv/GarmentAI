@@ -558,7 +558,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
             cat_name = cat_map.get(cat_id, "Others")
             # Check if file exists?? No, just assume strict mapping structure for now.
             # Filename in media root: "Category.jpg"
-            image = f"/media/{cat_name}.jpg"
+            image = f"/static/images/{cat_name}.jpg"
             print(f"Auto-assigned image: {image}")
 
         print(f"Creating product with outlet_id: {outlet_id}")

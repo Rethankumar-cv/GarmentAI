@@ -94,11 +94,11 @@ const HeroSection = () => {
 const CategoryStrip = () => {
     const navigate = useNavigate();
     const categories = [
-        { name: "Men", img: "/media/Shirts.jpg" },
-        { name: "Women", img: "/media/Sarees.jpg" },
-        { name: "Ethnic", img: "/media/Ethnic%20Wear.jpg" },
-        { name: "Casual", img: "/media/Casual%20Wear.jpg" },
-        { name: "Accessories", img: "/media/Jeans.jpg" }
+        { name: "Men", img: "/static/images/Shirts.jpg" },
+        { name: "Women", img: "/static/images/Sarees.jpg" },
+        { name: "Ethnic", img: "/static/images/Ethnic%20Wear.jpg" },
+        { name: "Casual", img: "/static/images/Casual%20Wear.jpg" },
+        { name: "Accessories", img: "/static/images/Jeans.jpg" }
     ];
 
     const handleCategoryClick = (categoryName) => {

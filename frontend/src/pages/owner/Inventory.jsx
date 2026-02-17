@@ -502,7 +502,7 @@ const Inventory = () => {
                                     >
                                         <option value="">Auto-assign based on Category</option>
                                         {['Shirts', 'T-Shirts', 'Jeans', 'Jackets', 'Sweaters', 'Dresses', 'Skirts', 'Sarees', 'Ethnic Wear', 'Casual Wear', 'Formal Wear', 'Sports Wear', 'Others'].map(c => (
-                                            <option key={c} value={`/media/${c}.jpg`}>{c} Image</option>
+                                            <option key={c} value={`/static/images/${c}.jpg`}>{c} Image</option>
                                         ))}
                                     </select>
                                     <p className="text-xs text-gray-400 mt-1">Select "Auto-assign" to use default category image.</p>
