@@ -132,10 +132,15 @@ const Navbar = (props) => {
 
                         {/* Desktop Navigation Links */}
                         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: role === 'OWNER' ? 'none' : 'flex' }, gap: 1 }}>
-                            {['Home', 'Shop', 'Men', 'Women'].map((page) => (
+                            {['Home', 'Shop', 'Men', 'Women', 'Orders'].map((page) => (
                                 <Button
                                     key={page}
-                                    onClick={() => navigate(page === 'Home' ? '/customer/home' : `/customer/shop?category=${page.toLowerCase()}`)}
+                                    onClick={() => {
+                                        if (page === 'Home') navigate('/customer/home');
+                                        else if (page === 'Orders') navigate('/customer/orders');
+                                        else if (['Men', 'Women'].includes(page)) navigate(`/customer/shop?category=${page.toLowerCase()}`);
+                                        else navigate('/customer/shop');
+                                    }}
                                     sx={{ color: 'text.secondary', fontWeight: 600, '&:hover': { color: 'primary.main', bgcolor: 'action.hover' } }}
                                 >
                                     {page}
@@ -210,12 +215,12 @@ const Navbar = (props) => {
                                     </MenuItem>
                                 )}
                                 {role !== 'OWNER' && (
-                                    <MenuItem onClick={() => { handleClose(); navigate('/customer/dashboard'); }}>
+                                    <MenuItem onClick={() => { handleClose(); navigate('/customer/orders'); }}>
                                         <ShoppingBag sx={{ mr: 2, color: 'text.secondary' }} /> My Orders
                                     </MenuItem>
                                 )}
                                 {role !== 'OWNER' && (
-                                    <MenuItem onClick={() => { handleClose(); navigate('/customer/dashboard'); }}>
+                                    <MenuItem onClick={() => { handleClose(); navigate('/customer/profile'); }}>
                                         <Person sx={{ mr: 2, color: 'text.secondary' }} /> My Profile
                                     </MenuItem>
                                 )}

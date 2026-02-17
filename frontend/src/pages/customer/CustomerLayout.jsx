@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import Navbar from '../../components/layout/Navbar';
 import { Box, Container, Paper, BottomNavigation, BottomNavigationAction, Typography, useTheme, useMediaQuery } from '@mui/material';
-import { Home, Store, ShoppingCart, Person } from '@mui/icons-material';
+import { Home, Store, ShoppingCart, Person, ListAlt } from '@mui/icons-material';
 
 const CustomerLayout = () => {
     const theme = useTheme();
@@ -17,6 +17,7 @@ const CustomerLayout = () => {
         if (path.includes('home')) return 0;
         if (path.includes('shop')) return 1;
         if (path.includes('cart')) return 2;
+        if (path.includes('orders')) return 3;
         return 0;
     };
 
@@ -49,11 +50,13 @@ const CustomerLayout = () => {
                             if (newValue === 0) navigate('/customer/home');
                             if (newValue === 1) navigate('/customer/shop');
                             if (newValue === 2) navigate('/customer/cart');
+                            if (newValue === 3) navigate('/customer/orders');
                         }}
                     >
                         <BottomNavigationAction label="Home" icon={<Home />} />
                         <BottomNavigationAction label="Shop" icon={<Store />} />
                         <BottomNavigationAction label="Cart" icon={<ShoppingCart />} />
+                        <BottomNavigationAction label="Orders" icon={<ListAlt />} />
                     </BottomNavigation>
                 </Paper>
             )}

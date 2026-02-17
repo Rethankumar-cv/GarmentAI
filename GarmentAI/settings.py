@@ -140,6 +140,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all in debug mode
 CORS_ALLOWED_ORIGINS = [origin.strip("/") for origin in os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',') if origin]

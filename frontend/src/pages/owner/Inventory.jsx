@@ -493,14 +493,19 @@ const Inventory = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                    <input
-                                        type="url"
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+                                    <select
+                                        name="image"
                                         value={formData.image}
                                         onChange={e => setFormData({ ...formData, image: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
-                                        placeholder="https://example.com/image.jpg"
-                                    />
+                                    >
+                                        <option value="">Auto-assign based on Category</option>
+                                        {['Shirts', 'T-Shirts', 'Jeans', 'Jackets', 'Sweaters', 'Dresses', 'Skirts', 'Sarees', 'Ethnic Wear', 'Casual Wear', 'Formal Wear', 'Sports Wear', 'Others'].map(c => (
+                                            <option key={c} value={`/media/${c}.jpg`}>{c} Image</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-gray-400 mt-1">Select "Auto-assign" to use default category image.</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

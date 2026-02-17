@@ -28,10 +28,16 @@ class ProductSerializer(serializers.ModelSerializer):
 class PurchaseSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_image = serializers.URLField(source='product.image', read_only=True)
+    customer_username = serializers.CharField(source='customer.username', read_only=True)
     
     class Meta:
         model = Purchase
-        fields = ['id', 'customer', 'product', 'product_name', 'product_image', 'outlet_id', 'quantity', 'total_price', 'created_at']
+        fields = ['id', 'customer', 'customer_username', 'product', 'product_name', 'product_image', 'outlet_id', 'quantity', 'total_price', 'created_at', 'order_status', 'tracking_id', 'last_updated', 'estimated_delivery', 'status_history']
+
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Purchase
+        fields = ['order_status', 'estimated_delivery']
 
 class CartSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)

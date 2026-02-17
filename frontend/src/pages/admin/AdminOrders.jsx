@@ -32,6 +32,8 @@ const AdminOrders = () => {
 
     useEffect(() => {
         fetchOrders();
+        const interval = setInterval(fetchOrders, 10000); // Poll every 10s
+        return () => clearInterval(interval);
     }, []);
 
     const handleDelete = async (id) => {
@@ -47,6 +49,18 @@ const AdminOrders = () => {
         } catch (error) {
             console.error("Failed to delete order", error);
             setNotification({ open: true, message: 'Failed to delete order', severity: 'error' });
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Pending': return { bgcolor: '#fef3c7', color: '#d97706' }; // Yellow
+            case 'Confirmed': return { bgcolor: '#e0f2fe', color: '#0284c7' }; // Blue
+            case 'Shipped': return { bgcolor: '#ffedd5', color: '#ea580c' }; // Orange
+            case 'Out for Delivery': return { bgcolor: '#f3e8ff', color: '#9333ea' }; // Purple
+            case 'Delivered': return { bgcolor: '#ecfdf5', color: '#059669' }; // Green
+            case 'Cancelled': return { bgcolor: '#fee2e2', color: '#dc2626' }; // Red
+            default: return { bgcolor: '#f1f5f9', color: '#64748b' }; // Grey
         }
     };
 
@@ -112,12 +126,11 @@ const AdminOrders = () => {
                                         <TableCell fontWeight={600}>₹{order.total_price.toLocaleString()}</TableCell>
                                         <TableCell>
                                             <Chip
-                                                label="Completed"
+                                                label={order.status || 'Pending'}
                                                 size="small"
                                                 icon={<LocalShipping sx={{ fontSize: '14px !important' }} />}
                                                 sx={{
-                                                    bgcolor: '#ecfdf5',
-                                                    color: '#059669',
+                                                    ...getStatusColor(order.status),
                                                     fontWeight: 600,
                                                     '& .MuiChip-icon': { color: 'inherit' }
                                                 }}

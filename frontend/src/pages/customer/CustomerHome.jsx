@@ -94,11 +94,11 @@ const HeroSection = () => {
 const CategoryStrip = () => {
     const navigate = useNavigate();
     const categories = [
-        { name: "Men", img: "https://images.unsplash.com/photo-1542272617-08f086303294?w=400&h=500&fit=crop" },
-        { name: "Women", img: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&h=500&fit=crop" },
-        { name: "Ethnic", img: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&h=500&fit=crop" },
-        { name: "Casual", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop" },
-        { name: "Accessories", img: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=400&h=500&fit=crop" }
+        { name: "Men", img: "/media/Shirts.jpg" },
+        { name: "Women", img: "/media/Sarees.jpg" },
+        { name: "Ethnic", img: "/media/Ethnic%20Wear.jpg" },
+        { name: "Casual", img: "/media/Casual%20Wear.jpg" },
+        { name: "Accessories", img: "/media/Jeans.jpg" }
     ];
 
     const handleCategoryClick = (categoryName) => {

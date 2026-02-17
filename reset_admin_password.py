@@ -8,7 +8,7 @@ django.setup()
 
 User = get_user_model()
 username = 'admin'
-password = '123'
+password = 'Admin123!'
 
 try:
     u = User.objects.get(username=username)

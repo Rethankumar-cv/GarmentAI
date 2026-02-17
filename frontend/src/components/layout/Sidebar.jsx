@@ -23,6 +23,7 @@ import {
     BarChart as SalesPatternsIcon,
     Map as GeoMapIcon,
     PieChart as DecisionSupportIcon,
+    ShoppingBag as ShoppingBagIcon,
     ChevronLeft,
     ChevronRight,
     Logout as LogoutIcon
@@ -41,6 +42,7 @@ const Sidebar = () => {
 
     const links = [
         { name: 'Overview', path: '/owner/dashboard', icon: DashboardIcon },
+        { name: 'Orders', path: '/owner/orders', icon: ShoppingBagIcon },
         { name: 'Inventory', path: '/owner/inventory', icon: InventoryIcon },
         { divider: true },
         { name: 'Predictions', path: '/owner/predictions', icon: PredictionsIcon },

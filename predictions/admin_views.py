@@ -50,7 +50,7 @@ class AdminDashboardStatsAPIView(APIView):
         
         # Recent activity
         recent_orders = Purchase.objects.order_by('-created_at')[:5].values(
-            'id', 'customer__username', 'product__name', 'total_price', 'created_at'
+            'id', 'customer__username', 'product__name', 'total_price', 'created_at', 'order_status'
         )
 
         return Response({
@@ -208,7 +208,8 @@ class AdminOrderListAPIView(APIView):
                 'product': p.product.name,
                 'quantity': p.quantity,
                 'total_price': p.total_price,
-                'date': p.created_at
+                'date': p.created_at,
+                'status': p.order_status
             })
         return Response(data)
 

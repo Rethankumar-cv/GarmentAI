@@ -6,7 +6,8 @@ from .api_views import (
     InventoryAnalyticsAPIView,
     DecisionSupportAPIView, SmartRecommendationsAPIView,
     SalesPatternsAPIView, GeoMapAPIView,
-    ReportExportAPIView
+    ReportExportAPIView,
+    CustomerOrderListView, OwnerOrderListView, OwnerOrderUpdateView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -35,6 +36,12 @@ urlpatterns = [
     path('owner/sales-patterns/', SalesPatternsAPIView.as_view(), name='api_sales_patterns'),
     path('owner/geo-map/', GeoMapAPIView.as_view(), name='api_geo_map'),
     path('owner/export-report/', ReportExportAPIView.as_view(), name='api_export_report'),
+    
+    # Order Management
+    path('owner/orders/', OwnerOrderListView.as_view(), name='owner_orders'),
+    path('owner/orders/<int:pk>/', OwnerOrderUpdateView.as_view(), name='owner_order_update'),
+    path('customer/orders/', CustomerOrderListView.as_view(), name='customer_orders'),
+
     path('products/', ProductListCreateAPIView.as_view(), name='product-list'),
     path('products/<int:pk>/', ProductDetailAPIView.as_view(), name='product-detail'),
     path('cart/', CartAPIView.as_view(), name='cart'),

@@ -14,6 +14,7 @@ import DecisionSupport from './pages/owner/DecisionSupport';
 import Forecast from './pages/owner/Forecast';
 import Recommendations from './pages/owner/Recommendations';
 import Inventory from './pages/owner/Inventory';
+import OrderManagement from './pages/owner/OrderManagement';
 
 import CustomerLayout from './pages/customer/CustomerLayout';
 import CustomerShop from './pages/customer/CustomerShop';
@@ -22,6 +23,8 @@ import ProductDetails from './pages/customer/ProductDetails';
 import Cart from './pages/customer/Cart';
 import Checkout from './pages/customer/Checkout';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import MyOrders from './pages/customer/MyOrders';
+import Profile from './pages/customer/Profile';
 
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -115,6 +118,7 @@ const App = () => {
             <Route path="predictions/forecast" element={<Forecast />} />
             <Route path="predictions/recommendations" element={<Recommendations />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="orders" element={<OrderManagement />} />
           </Route>
 
           {/* Customer Routes */}
@@ -129,6 +133,8 @@ const App = () => {
             <Route path="product/:id" element={<ProductDetails />} />
             <Route path="cart" element={<Cart />} />
             <Route path="checkout" element={<Checkout />} />
+            <Route path="orders" element={<MyOrders />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="dashboard" element={<CustomerDashboard />} />
           </Route>
 

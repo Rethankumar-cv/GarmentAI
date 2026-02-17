@@ -33,6 +33,18 @@ const AdminDashboard = () => {
         fetchStats();
     }, []);
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Pending': return { bgcolor: '#fef3c7', color: '#d97706' };
+            case 'Confirmed': return { bgcolor: '#e0f2fe', color: '#0284c7' };
+            case 'Shipped': return { bgcolor: '#ffedd5', color: '#ea580c' };
+            case 'Out for Delivery': return { bgcolor: '#f3e8ff', color: '#9333ea' };
+            case 'Delivered': return { bgcolor: '#ecfdf5', color: '#059669' };
+            case 'Cancelled': return { bgcolor: '#fee2e2', color: '#dc2626' };
+            default: return { bgcolor: '#f1f5f9', color: '#64748b' };
+        }
+    };
+
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
 
     return (
@@ -104,7 +116,15 @@ const AdminDashboard = () => {
                                     <TableCell sx={{ fontWeight: 600 }}>₹{order.total_price.toLocaleString()}</TableCell>
                                     <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
                                     <TableCell>
-                                        <Chip label="Completed" color="success" size="small" variant="soft" sx={{ bgcolor: '#ecfdf5', color: '#059669' }} />
+                                        <Chip
+                                            label={order.order_status || 'Pending'}
+                                            size="small"
+                                            sx={{
+                                                ...getStatusColor(order.order_status),
+                                                fontWeight: 600,
+                                                borderRadius: '6px'
+                                            }}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ))}

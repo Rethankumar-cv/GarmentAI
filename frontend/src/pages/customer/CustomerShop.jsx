@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import useCartStore from '../../store/cartStore';
+import { DEFAULT_PRODUCT_IMAGE } from '../../constants';
 import {
     Box,
     Container,
@@ -113,37 +114,22 @@ const ProductCard = ({ product }) => {
         >
             {/* Image Container - Fixed Aspect Ratio 1:1 (Square) */}
             <Box sx={{ position: 'relative', width: '100%', paddingBottom: '100%', overflow: 'hidden', borderRadius: 2, bgcolor: 'grey.100', mb: 2 }}>
-                {product.image ? (
-                    <Box
-                        component="img"
-                        src={product.image}
-                        alt={product.name}
-                        className="product-image"
-                        sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            transition: 'transform 0.6s ease'
-                        }}
-                    />
-                ) : (
-                    <Box
-                        sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'text.disabled',
-                            bgcolor: 'grey.100'
-                        }}
-                    >
-                        <Typography variant="h3" fontWeight="bold" color="grey.300">{product.name.charAt(0)}</Typography>
-                    </Box>
-                )}
+                <Box
+                    component="img"
+                    src={product.image || DEFAULT_PRODUCT_IMAGE}
+                    alt={product.name}
+                    className="product-image"
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.6s ease'
+                    }}
+                    onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_PRODUCT_IMAGE; }}
+                />
 
                 {/* Badges */}
                 {product.stock <= 5 && product.stock > 0 && (

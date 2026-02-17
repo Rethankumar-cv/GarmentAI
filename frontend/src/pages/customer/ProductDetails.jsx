@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import useCartStore from '../../store/cartStore';
 import { motion } from 'framer-motion';
+import { DEFAULT_PRODUCT_IMAGE } from '../../constants';
 import {
     Box,
     Container,
@@ -120,24 +121,19 @@ const ProductDetails = () => {
                                 mb: 2
                             }}
                         >
-                            {product.image ? (
-                                <Box
-                                    component="img"
-                                    src={product.image}
-                                    alt={product.name}
-                                    sx={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
-                                    }}
-                                />
-                            ) : (
-                                <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'primary.light', opacity: 0.1 }}>
-                                    <Typography variant="h1" color="primary.main">{product.name.charAt(0)}</Typography>
-                                </Box>
-                            )}
+                            <Box
+                                component="img"
+                                src={product.image || DEFAULT_PRODUCT_IMAGE}
+                                alt={product.name}
+                                sx={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                                onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_PRODUCT_IMAGE; }}
+                            />
                         </Paper>
 
                         <Grid container spacing={2}>

@@ -1,0 +1,25 @@
+--- DIAGNOSTIC REPORT ---
+MEDIA_ROOT: C:\Users\Rethan kumar cv\Downloads\GarmentsInsights_AI\GarmentsInsights_AI\media
+MEDIA_ROOT exists.
+media/products exists containing 6 files.
+Sample files: ['hari_5.png', 'Interview_Boys_Collection_2.png', 'saree_6.png']
+
+--- DATABASE RECORDS ---
+Product: Shirt 1, Image Field: '/media/products/Shirt_1_1.png'
+  -> File path: C:\Users\Rethan kumar cv\Downloads\GarmentsInsights_AI\GarmentsInsights_AI\media\products/Shirt_1_1.png -> Exists? True
+  -> Request: http://127.0.0.1:8000/media/products/Shirt_1_1.png -> OK (200)
+  -> Request: http://localhost:8000/media/products/Shirt_1_1.png -> OK (200)
+  -> Request: http://127.0.0.1:5173/media/products/Shirt_1_1.png -> failed (<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>)
+  -> Request: http://localhost:5173/media/products/Shirt_1_1.png -> OK (200)
+Product: Interview Boys Collection, Image Field: '/media/products/Interview_Boys_Collection_2.png'
+  -> File path: C:\Users\Rethan kumar cv\Downloads\GarmentsInsights_AI\GarmentsInsights_AI\media\products/Interview_Boys_Collection_2.png -> Exists? True
+  -> Request: http://127.0.0.1:8000/media/products/Interview_Boys_Collection_2.png -> OK (200)
+  -> Request: http://localhost:8000/media/products/Interview_Boys_Collection_2.png -> OK (200)
+  -> Request: http://127.0.0.1:5173/media/products/Interview_Boys_Collection_2.png -> failed (<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>)
+  -> Request: http://localhost:5173/media/products/Interview_Boys_Collection_2.png -> OK (200)
+Product: Saree Blue, Image Field: '/media/products/Saree_Blue_3.png'
+  -> File path: C:\Users\Rethan kumar cv\Downloads\GarmentsInsights_AI\GarmentsInsights_AI\media\products/Saree_Blue_3.png -> Exists? True
+  -> Request: http://127.0.0.1:8000/media/products/Saree_Blue_3.png -> OK (200)
+  -> Request: http://localhost:8000/media/products/Saree_Blue_3.png -> OK (200)
+  -> Request: http://127.0.0.1:5173/media/products/Saree_Blue_3.png -> failed (<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>)
+  -> Request: http://localhost:5173/media/products/Saree_Blue_3.png -> OK (200)

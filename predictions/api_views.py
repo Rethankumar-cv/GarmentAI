@@ -11,7 +11,8 @@ from .serializers import (
     UserSerializer, UserProfileSerializer, BoutiqueSerializer, 
     ProductSerializer,
     PurchaseSerializer,
-    CartSerializer
+    CartSerializer,
+    OrderUpdateSerializer
 )
 import joblib
 import pandas as pd
@@ -537,7 +538,31 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         # Auto-set outlet_id from owner's profile
-        serializer.save(outlet_id=self.request.user.userprofile.outlet_id)
+        outlet_id = 1 # Default fallback
+        try:
+             if hasattr(self.request.user, 'userprofile') and self.request.user.userprofile.outlet_id is not None:
+                 outlet_id = self.request.user.userprofile.outlet_id
+        except Exception as e:
+            print(f"Error fetching outlet_id: {e}")
+        
+        # Auto-map Image if not provided
+        image = serializer.validated_data.get('image', None)
+        if not image:
+            cat_id = serializer.validated_data.get('garment_category', 12)
+            # Map: 0=Shirts, 7=Sarees etc.
+            cat_map = {
+                0: "Shirts", 1: "T-Shirts", 2: "Jeans", 3: "Jackets", 4: "Sweaters",
+                5: "Dresses", 6: "Skirts", 7: "Sarees", 8: "Ethnic Wear", 9: "Casual Wear",
+                10: "Formal Wear", 11: "Sports Wear", 12: "Others"
+            }
+            cat_name = cat_map.get(cat_id, "Others")
+            # Check if file exists?? No, just assume strict mapping structure for now.
+            # Filename in media root: "Category.jpg"
+            image = f"/media/{cat_name}.jpg"
+            print(f"Auto-assigned image: {image}")
+
+        print(f"Creating product with outlet_id: {outlet_id}")
+        serializer.save(outlet_id=outlet_id, image=image)
 
 class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
@@ -655,6 +680,60 @@ class PurchaseListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(customer=self.request.user)
+
+class CustomerOrderListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PurchaseSerializer
+
+    def get_queryset(self):
+        return Purchase.objects.filter(customer=self.request.user).order_by('-created_at')
+
+class OwnerOrderListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PurchaseSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        try:
+             if user.userprofile.role == 'OWNER':
+                 return Purchase.objects.filter(outlet_id=user.userprofile.outlet_id).order_by('-created_at')
+        except:
+            pass
+        return Purchase.objects.none()
+
+class OwnerOrderUpdateView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OrderUpdateSerializer
+    queryset = Purchase.objects.all()
+
+    def perform_update(self, serializer):
+        # Verify ownership
+        order = self.get_object()
+        user = self.request.user
+        try:
+            if user.userprofile.role != 'OWNER' or user.userprofile.outlet_id != order.outlet_id:
+                raise serializers.ValidationError("You do not have permission to update this order.")
+        except:
+             raise serializers.ValidationError("Unauthorized")
+
+        # Update history
+        status = serializer.validated_data.get('order_status')
+        if status and status != order.order_status:
+            history_entry = {
+                "status": status,
+                "timestamp": str(timezone.now()), # using default str conversion for simple JSON
+                "note": f"Status updated to {status}"
+            }
+            # Append method for JSONField (needs to retrieve current list, append, then save)
+            # Django's JSONField handles python objects, so we can just append to the list in memory
+            # But we need to ensure it's a list.
+            if not isinstance(order.status_history, list):
+                order.status_history = []
+            
+            order.status_history.append(history_entry)
+            serializer.save(status_history=order.status_history)
+        else:
+            serializer.save()
 
 class InventoryAnalyticsAPIView(views.APIView):
     permission_classes = [IsAuthenticated]

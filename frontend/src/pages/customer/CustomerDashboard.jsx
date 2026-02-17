@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import api from '../../services/api';
+import { DEFAULT_PRODUCT_IMAGE } from '../../constants';
 import {
     Box,
     Container,
@@ -31,7 +33,7 @@ import {
     CheckCircle
 } from '@mui/icons-material';
 
-const OrderItem = ({ id, date, status, total, items }) => (
+const OrderItem = ({ id, date, status, total, items, onTrack }) => (
     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 2, overflow: 'hidden' }}>
         <Box sx={{ bgcolor: 'grey.50', p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
@@ -45,7 +47,15 @@ const OrderItem = ({ id, date, status, total, items }) => (
             <Box>
                 <Typography variant="caption" color="text.secondary" display="block">ORDER # {id}</Typography>
                 <Box display="flex" alignItems="center" gap={0.5}>
-                    <Typography variant="body2" color="primary" fontWeight="bold">View Details</Typography>
+                    <Typography
+                        variant="body2"
+                        color="primary"
+                        fontWeight="bold"
+                        sx={{ cursor: 'pointer' }}
+                        onClick={onTrack}
+                    >
+                        View Details
+                    </Typography>
                 </Box>
             </Box>
         </Box>
@@ -55,7 +65,7 @@ const OrderItem = ({ id, date, status, total, items }) => (
                     <CheckCircle color="success" fontSize="small" />
                     <Typography variant="body2" fontWeight="bold">{status}</Typography>
                 </Stack>
-                <Button variant="outlined" size="small">Track Package</Button>
+                <Button variant="outlined" size="small" onClick={onTrack}>Track Package</Button>
             </Stack>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
@@ -64,8 +74,9 @@ const OrderItem = ({ id, date, status, total, items }) => (
                         <Box display="flex" gap={2}>
                             <Box
                                 component="img"
-                                src={item.image || 'https://via.placeholder.com/60'}
+                                src={item.image || DEFAULT_PRODUCT_IMAGE}
                                 sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1, bgcolor: 'grey.100' }}
+                                onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_PRODUCT_IMAGE; }}
                             />
                             <Box>
                                 <Typography variant="body2" fontWeight="bold">{item.name}</Typography>
@@ -81,6 +92,7 @@ const OrderItem = ({ id, date, status, total, items }) => (
 
 const CustomerDashboard = () => {
     const { user, logout } = useAuthStore();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(0);
 
     const handleTabChange = (event, newValue) => {
@@ -111,7 +123,7 @@ const CustomerDashboard = () => {
                 return {
                     id: purchase.id,
                     date: date,
-                    status: 'Delivered', // Mock status as it's not in DB yet
+                    status: purchase.order_status,
                     total: purchase.total_price.toFixed(2),
                     items: [{
                         name: purchase.product_name || 'Product',
@@ -182,7 +194,11 @@ const CustomerDashboard = () => {
                                 <Typography>Loading orders...</Typography>
                             ) : orders.length > 0 ? (
                                 orders.map((order) => (
-                                    <OrderItem key={order.id} {...order} />
+                                    <OrderItem
+                                        key={order.id}
+                                        {...order}
+                                        onTrack={() => navigate('/customer/orders')}
+                                    />
                                 ))
                             ) : (
                                 <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50', borderRadius: 3 }}>
