@@ -14,6 +14,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from .monitoring_views import MLObservabilityAPIView
 from .admin_views import (
     AdminLoginAPIView, AdminDashboardStatsAPIView, 
     AdminUserListAPIView, AdminUserDetailAPIView,
@@ -57,4 +58,6 @@ urlpatterns = [
     path('admin/products/<int:pk>/', AdminProductDetailAPIView.as_view(), name='admin_product_detail'),
     path('admin/orders/', AdminOrderListAPIView.as_view(), name='admin_orders'),
     path('admin/orders/<int:pk>/', AdminOrderDetailAPIView.as_view(), name='admin_order_detail'),
+    # Phase 8 
+    path('admin/ml-observability/', MLObservabilityAPIView.as_view(), name='ml_observability'),
 ]

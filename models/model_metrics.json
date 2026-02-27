@@ -1,0 +1,47 @@
+{
+  "demand_model": {
+    "rmse": 256.2463,
+    "mae": 131.6094,
+    "r2": 0.4887,
+    "mape_pct": 502.99,
+    "train_rows": 35387,
+    "test_rows": 8847,
+    "features": [
+      "lag_1",
+      "lag_2",
+      "lag_3",
+      "rolling_avg_3m",
+      "Month",
+      "price_avg",
+      "num_transactions",
+      "StockCode_enc"
+    ],
+    "n_estimators": 300,
+    "trained_at": "2026-02-23T15:02:51.511994"
+  },
+  "elasticity_model": {
+    "ridge_r2": 0.3414,
+    "xgb_rmse": 246.552,
+    "xgb_r2": 0.5149,
+    "global_elasticity_coef": -0.3589,
+    "train_rows": 44684,
+    "features": [
+      "avg_price",
+      "price_vs_avg",
+      "Month",
+      "Quarter",
+      "lag_quantity",
+      "StockCode_enc"
+    ],
+    "trained_at": "2026-02-23T15:05:56.903189"
+  },
+  "recommender_model": {
+    "strategy": "cosine_similarity",
+    "n_items": 4619,
+    "n_products": 4619,
+    "n_customers": 5852,
+    "coverage_pct": 10.8,
+    "recommendation_pairs": 5000,
+    "trained_at": "2026-02-23T15:06:49.249211"
+  }
+}

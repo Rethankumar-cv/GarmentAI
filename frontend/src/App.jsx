@@ -32,6 +32,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminMLOps from './pages/admin/AdminMLOps';
 
 import useAuthStore from './store/authStore';
 
@@ -102,6 +103,7 @@ const App = () => {
             <Route path="users" element={<AdminUsers />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="ml-ops" element={<AdminMLOps />} />
           </Route>
 
           {/* Owner Routes */}

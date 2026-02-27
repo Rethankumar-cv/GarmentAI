@@ -54,3 +54,11 @@ Thumbs.db
 
 # Project specifics
 # GarmentAI_Model/ is tracked because it's required for the app and small enough (266KB).
+
+# Ignore large datasets and models
+analytics/clean_transactions.csv
+models/recommender_model.joblib
+
+# Ignore environment variables and secrets
+.env
+.env.*

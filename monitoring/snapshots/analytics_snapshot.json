@@ -1,0 +1,11 @@
+{
+  "avg_price": 3.6038903990674593,
+  "price_std": 11.722914213126728,
+  "product_count": 4951,
+  "avg_revenue": 3519.521151282569,
+  "avg_demand": 173.27616441763573,
+  "demand_variance": 191473.52646369272,
+  "customer_count": 5852,
+  "avg_frequency": 6.253246753246753,
+  "captured_at": "2026-02-26T10:10:42.045300"
+}

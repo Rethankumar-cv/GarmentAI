@@ -1,0 +1,3 @@
+SalesPatterns: 200 {"message": "No products to analyze"}
+DecisionSupport: 200 {"message": "No products to analyze"}
+GeoMap: 200 {"city": "Ahmedabad, Gujarat", "lat": 23.0225, "lng": 72.5714, "price_per_meter": 45, "lead_time": "3-5 Days", "supplier": "Gujarat Cotton Co-op", "insight": "Ahmedabad is the largest hub for cotton textiles in India, offering competitive rates."}

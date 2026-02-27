@@ -1,0 +1,17 @@
+{
+  "run_id": "20260226_100502",
+  "started_at": "2026-02-26T10:05:02.062468",
+  "finished_at": "2026-02-26T10:05:02.065591",
+  "duration_seconds": 0.0,
+  "status": "failed",
+  "steps": [],
+  "outputs": {},
+  "errors": [
+    {
+      "step": "pipeline",
+      "at": "2026-02-26T10:05:02.064582",
+      "error": "Traceback (most recent call last):\n  File \"C:\\Users\\Rethan kumar cv\\Downloads\\GarmentsInsights_AI\\GarmentsInsights_AI\\data_pipeline\\pipeline.py\", line 120, in run_pipeline\n    raw_df = load_raw()\n             ^^^^^^^^^^\n  File \"C:\\Users\\Rethan kumar cv\\Downloads\\GarmentsInsights_AI\\GarmentsInsights_AI\\data_pipeline\\extract.py\", line 26, in load_raw\n    raise FileNotFoundError(\nFileNotFoundError: Dataset not found at 'C:\\Users\\Rethan kumar cv\\Downloads\\GarmentsInsights_AI\\GarmentsInsights_AI\\data_pipeline\\..\\data\\online_retail.csv'.\nRun: python convert_dataset.py  to generate it from the Excel source.\n"
+    }
+  ],
+  "models_trained": []
+}

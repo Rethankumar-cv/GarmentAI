@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import api from '../../services/api';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import usePredictionStore from '../../store/predictionStore';
 import {
     TrendingUp, Activity, Zap, Shield, AlertTriangle, CheckCircle
 } from 'lucide-react';
@@ -29,35 +30,46 @@ ChartJS.register(
 );
 
 const SalesPatterns = () => {
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { predictionData } = usePredictionStore();
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get('owner/sales-patterns/');
-                setData(res.data);
-            } catch (err) {
-                console.error("Failed to fetch sales patterns", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    if (loading) {
+    if (!predictionData) {
         return (
-            <div className="flex justify-center h-64 items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
+            <div className="flex flex-col items-center justify-center py-24 text-gray-500 bg-white rounded-2xl shadow-sm border border-gray-100 m-8">
+                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                    <TrendingUp className="w-10 h-10 text-indigo-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">Sales Patterns Unavailable</h3>
+                <p className="mt-2 text-sm text-gray-500">Please run an AI prediction model first to unlock insights.</p>
+                <button
+                    onClick={() => navigate('/owner/predictions')}
+                    className="mt-6 px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                    Run AI Prediction
+                </button>
             </div>
         );
     }
 
-    if (!data) return <div className="text-center py-12 text-gray-500">Failed to load patterns.</div>;
+    const { sales_patterns, sales_curve, demand_planning, recommendations } = predictionData;
+    let risk_level = "Low Risk";
+    if (sales_patterns.volatility > 25) risk_level = "High Risk";
+    else if (sales_patterns.volatility > 15) risk_level = "Moderate Risk";
 
-    const { metrics, chart, recommendations } = data;
+    const metrics = {
+        trend: sales_patterns.trend,
+        seasonality: sales_patterns.seasonality,
+        volatility_percent: sales_patterns.volatility,
+        confidence_percent: demand_planning.forecast_confidence <= 1 ? formatPercent(demand_planning.forecast_confidence) : demand_planning.forecast_confidence,
+        risk_level: risk_level
+    };
+
+    function formatPercent(val) {
+        return Math.round(val * 100);
+    }
+
+    const chart = sales_curve;
+    const recList = recommendations?.actions || [];
 
     return (
         <div className="max-w-7xl mx-auto space-y-8">
@@ -154,7 +166,7 @@ const SalesPatterns = () => {
                         <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-1000 ${metrics.risk_level.includes("High") ? 'bg-red-500' :
-                                        metrics.risk_level.includes("Moderate") ? 'bg-yellow-500' : 'bg-green-500'
+                                    metrics.risk_level.includes("Moderate") ? 'bg-yellow-500' : 'bg-green-500'
                                     }`}
                                 style={{ width: `${Math.min(metrics.volatility_percent * 2, 100)}%` }}
                             ></div>
@@ -172,7 +184,7 @@ const SalesPatterns = () => {
                     <div className="mt-6">
                         <span className="text-gray-500 font-medium">Risk Level: </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${metrics.risk_level.includes("High") ? 'bg-red-600' :
-                                metrics.risk_level.includes("Moderate") ? 'bg-yellow-600' : 'bg-emerald-600'
+                            metrics.risk_level.includes("Moderate") ? 'bg-yellow-600' : 'bg-emerald-600'
                             }`}>
                             {metrics.risk_level}
                         </span>
@@ -191,7 +203,7 @@ const SalesPatterns = () => {
                     Garment AI Recommendations
                 </h3>
                 <ul className="space-y-2">
-                    {recommendations.map((rec, idx) => (
+                    {recList.map((rec, idx) => (
                         <li key={idx} className="flex items-start gap-3 text-sm font-medium opacity-90">
                             <div className="mt-1.5 w-1.5 h-1.5 bg-white rounded-full flex-shrink-0" />
                             <span>{rec}</span>

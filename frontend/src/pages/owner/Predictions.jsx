@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import api from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Line } from 'react-chartjs-2';
-import { Settings, TrendingUp, AlertTriangle, DollarSign, Map, BarChart2, PieChart, List, Sparkles, ArrowRight, RotateCcw, Clock } from 'lucide-react';
+import { Settings, TrendingUp, AlertTriangle, IndianRupee, Map, BarChart2, PieChart, List, Sparkles, ArrowRight, RotateCcw, Clock } from 'lucide-react';
 import usePredictionStore from '../../store/predictionStore';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, DashboardCard, StatCard } from '../../components/common/OwnerComponents';
@@ -214,7 +214,7 @@ const Predictions = () => {
                                         title="Optimal Price"
                                         value={`₹${predictionData.pricing.optimal_price}`}
                                         trend={predictionData.pricing.optimal_price > formData.price ? "up" : "down"}
-                                        icon={DollarSign} color="emerald"
+                                        icon={IndianRupee} color="emerald"
                                         subtext={`Current: ₹${formData.price}`}
                                     />
                                     <StatCard

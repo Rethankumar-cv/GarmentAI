@@ -12,13 +12,23 @@ const Forecast = () => {
     const { predictionData } = usePredictionStore();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!predictionData) {
-            navigate('/owner/predictions');
-        }
-    }, [predictionData, navigate]);
-
-    if (!predictionData) return null;
+    if (!predictionData) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 text-gray-500 bg-white rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto">
+                <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                    <BarChart className="w-10 h-10 text-indigo-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Detailed Forecast Unavailable</h3>
+                <p className="max-w-md mx-auto text-center text-gray-500 mb-8">You need to run an AI prediction model first to view the 12-month metrics.</p>
+                <button
+                    onClick={() => navigate('/owner/predictions')}
+                    className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                >
+                    Run AI Prediction
+                </button>
+            </div>
+        );
+    }
 
     const { forecast, demand_planning } = predictionData;
 

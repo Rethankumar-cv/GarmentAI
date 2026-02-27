@@ -12,7 +12,8 @@ import {
     Logout as LogoutIcon,
     ChevronLeft,
     ChevronRight,
-    AdminPanelSettings
+    AdminPanelSettings,
+    Assessment
 } from '@mui/icons-material';
 
 const drawerWidth = 260;
@@ -35,6 +36,7 @@ const AdminLayout = () => {
         { text: 'Users', icon: PeopleIcon, path: '/admin/users' },
         { text: 'Products', icon: ProductIcon, path: '/admin/products' },
         { text: 'Orders', icon: OrderIcon, path: '/admin/orders' },
+        { text: 'MLOps', icon: Assessment, path: '/admin/ml-ops' },
     ];
 
     return (

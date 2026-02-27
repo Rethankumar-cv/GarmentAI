@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-02-23T16:56:42.394686",
+  "drift_detected": false,
+  "drift_score": 0.0,
+  "feature_scores": {
+    "avg_price": 0.0,
+    "price_std": 0.0,
+    "product_count": 0.0,
+    "avg_revenue": 0.0,
+    "avg_demand": 0.0,
+    "demand_variance": 0.0,
+    "customer_count": 0.0,
+    "avg_frequency": 0.0
+  },
+  "has_baseline": true,
+  "status": "ok"
+}

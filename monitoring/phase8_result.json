@@ -1,0 +1,58 @@
+{
+  "score": "8/8",
+  "status": "FULLY COMPLETE",
+  "passed": {
+    "model_registry": {
+      "active_demand_model": "v1"
+    },
+    "data_drift": {
+      "status": "ok",
+      "drift_detected": false,
+      "score": 0.0
+    },
+    "model_performance": {
+      "degradation": false,
+      "history": 6
+    },
+    "alert_manager": {
+      "total_alerts": 2,
+      "unacknowledged": 2,
+      "critical": 0,
+      "last_alert": "2026-02-23T16:44:51.567289"
+    },
+    "pipeline_validation": {
+      "all_passed": true,
+      "checks": 4
+    },
+    "monitoring_views": {
+      "http_status": 200,
+      "sections": [
+        "generated_at",
+        "pipeline",
+        "models",
+        "drift",
+        "performance",
+        "alerts",
+        "s3",
+        "dataset"
+      ],
+      "pipeline_status": "success",
+      "s3_ok": true,
+      "all_models_loaded": false
+    },
+    "ml_service_caching": {
+      "ok": false,
+      "has_active_versions": false,
+      "has_analytics_ts": false,
+      "has_force_reload": true,
+      "stale_check": {
+        "models": true,
+        "analytics": true
+      }
+    },
+    "api_urls": {
+      "url": "/api/admin/ml-observability/"
+    }
+  },
+  "failed": {}
+}

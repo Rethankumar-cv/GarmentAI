@@ -1,0 +1,18 @@
+{
+    "demand_model": "v1",
+    "elasticity_model": "v1",
+    "recommender_model": "v1",
+    "last_updated": "2026-02-23T16:33:45",
+    "updated_by": "initial_setup",
+    "history": {
+        "demand_model": [
+            "v1"
+        ],
+        "elasticity_model": [
+            "v1"
+        ],
+        "recommender_model": [
+            "v1"
+        ]
+    }
+}

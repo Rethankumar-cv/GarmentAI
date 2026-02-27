@@ -1,0 +1,19 @@
+{
+  "pipeline_run_at": "2026-02-23T16:44:58.508508",
+  "elapsed_seconds": 12.1,
+  "raw_rows": 1067371,
+  "clean_rows": 802632,
+  "products": 4619,
+  "customers": 5852,
+  "date_range": {
+    "from": "2009-12-01",
+    "to": "2011-12-09"
+  },
+  "outputs": {
+    "product_demand": 48243,
+    "pricing_signals": 4951,
+    "customer_segments": 5852,
+    "inventory_metrics": 5272
+  },
+  "s3_configured": true
+}

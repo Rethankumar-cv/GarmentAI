@@ -18,7 +18,6 @@ import joblib
 import pandas as pd
 import numpy as np
 import json
-import random
 from django.db.models import Sum, Count, Avg
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -45,22 +44,22 @@ def make_json_safe(obj):
 from django.conf import settings
 import os
 
-# Load Model
-try:
-    model_path = os.path.join(settings.BASE_DIR, "GarmentAI_Model")
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print(f"Model loaded successfully from {model_path}")
-    else:
-        print(f"Model file not found at {model_path}")
-        model = None
-except Exception as e:
-    print(f"FAILED TO LOAD MODEL: {e}")
-    model = None
+# ── ML Service (centralized model loader — replaces inline BigMart model) ──
+from predictions.ml_service import ml
+ml.initialize()
 
 SERVICE_LEVEL = 0.95
 ORDER_COST = 500
 HOLDING_COST_PERCENT = 0.12
+
+# Geographic outlet mapping (kept for geo_intelligence response field)
+outlet_geo = {
+    0:("Delhi",28.61,77.20),1:("Mumbai",19.07,72.87),
+    2:("Chennai",13.08,80.27),3:("Kolkata",22.57,88.36),
+    4:("Bangalore",12.97,77.59),5:("Hyderabad",17.38,78.48),
+    6:("Jaipur",26.91,75.78),7:("Ahmedabad",23.02,72.57),
+    8:("Pune",18.52,73.85),9:("Surat",21.17,72.83)
+}
 
 garment_categories = {
     "Shirts": 0, "T-Shirts": 1, "Jeans": 2, "Jackets": 3, "Sweaters": 4,
@@ -70,14 +69,6 @@ garment_categories = {
 
 fabric_mapping = {
     "Cotton": 0, "Silk": 1, "Polyester": 2, "Wool": 0, "Linen": 1, "Others": 2
-}
-
-outlet_geo = {
-    0:("Delhi",28.61,77.20),1:("Mumbai",19.07,72.87),
-    2:("Chennai",13.08,80.27),3:("Kolkata",22.57,88.36),
-    4:("Bangalore",12.97,77.59),5:("Hyderabad",17.38,78.48),
-    6:("Jaipur",26.91,75.78),7:("Ahmedabad",23.02,72.57),
-    8:("Pune",18.52,73.85),9:("Surat",21.17,72.83)
 }
 
 # ================= AUTH API =================
@@ -192,80 +183,59 @@ class PredictSalesAPIView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if not model:
-             return Response({"error": "Model not loaded"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        print(f"DEBUG INCOMING DATA: {request.data}")
         try:
             # Input parsing with error handling
             try:
                 item_weight = float(request.data.get("item_weight", 0) or 0)
                 fabric_type_str = request.data.get("fabric_type", "Others")
                 fabric_int = fabric_mapping.get(fabric_type_str, 2)
-                
-                garment_cat = request.data.get("garment_category", "Others")
-                cat_int = garment_categories.get(garment_cat, 12)
+                garment_category = request.data.get("garment_category", "Shirts")
                 
                 price = float(request.data.get("price", 0) or 0)
                 outlet_id = int(request.data.get("outlet_id", 0) or 0)
-                est_year = int(request.data.get("outlet_established_year", 2000))
                 outlet_size = int(request.data.get("outlet_size", 1))
-                loc_type = int(request.data.get("outlet_location_type", 1))
-                outlet_type = int(request.data.get("outlet_type", 1))
+                stockcode = request.data.get("stockcode", "").strip().upper() or "85123A"
             except ValueError as e:
-                 return Response({"error": f"Invalid input format: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": f"Invalid input format: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-            data = {
-                "Item_Weight": item_weight,
-                "Item_Fat_Content": int(fabric_int),
-                "Item_Visibility": round(random.uniform(0.005, 0.25), 3),
-                "Item_Type": int(cat_int),
-                "Item_MRP": price,
-                "Outlet_Identifier": outlet_id,
-                "Outlet_Establishment_Year": est_year,
-                "Outlet_Size": outlet_size,
-                "Outlet_Location_Type": loc_type,
-                "Outlet_Type": outlet_type
-            }
+            current_month = timezone.now().month
 
-            # Prediction Logic (from views.py)
-            base_monthly = float(model.predict(pd.DataFrame([data]))[0])
-            base_annual = base_monthly * 12
-
-            # Elasticity
-            mrp_range = np.linspace(price * 0.85, price * 1.15, 12)
-            sales_curve = []
-            for p in mrp_range:
-                temp = data.copy()
-                temp["Item_MRP"] = p
-                sales_curve.append(float(model.predict(pd.DataFrame([temp]))[0]) * 12)
-            
-            elasticity = np.polyfit(mrp_range, sales_curve, 1)[0]
-            optimal_price = round(mrp_range[np.argmax(sales_curve)], 2)
-            
-            # Forecast (Mock Logic for now as real logical complexity is high)
+            # ── Demand Forecast via ml_service (replaces BigMart model) ────────────
+            demand_result = ml.predict_demand_for_product(
+                stockcode=stockcode,
+                price=price,
+                current_month=current_month,
+                garment_category=garment_category,
+                fabric_type=fabric_type_str,
+                outlet_size=outlet_size
+            )
+            forecast = demand_result["monthly_forecast"]
+            base_monthly = demand_result["base_monthly"]
+            base_annual = demand_result["base_annual"]
             avg_monthly = base_monthly
-            seasonality_factors = [0.8, 0.85, 0.9, 1.0, 1.1, 1.2, 1.15, 1.0, 0.95, 0.9, 0.85, 0.8] # Simple pattern
-            forecast = [avg_monthly * f * random.uniform(0.95, 1.05) for f in seasonality_factors]
-            
-            # Recalculate metrics based on this forecast
             daily_sales = avg_monthly / 30
 
-            # ================= SALES PATTERNS =================
-            x = np.arange(12)
-            slope = np.polyfit(x, forecast, 1)[0]
-            momentum = (np.mean(forecast[-3:]) - np.mean(forecast[:3])) / max(avg_monthly,1)
-            volatility_ratio = np.std(forecast) / max(avg_monthly,1)
+            # ── Price Elasticity via elasticity model ────────────────────────────────
+            elasticity_result = ml.compute_price_elasticity(
+                stockcode=stockcode,
+                current_price=price,
+                garment_category=garment_category,
+                fabric_type=fabric_type_str,
+                outlet_size=outlet_size
+            )
+            mrp_range = elasticity_result["prices"]
+            sales_curve = elasticity_result["predicted_sales"]
+            optimal_price = elasticity_result["optimal_price"]
+            elasticity = elasticity_result["elasticity_coef"]
 
-            if slope > 0.07 and momentum > 0.05:
-                trend = "Strong Upward"
-            elif slope > 0.02:
-                trend = "Mild Upward"
-            elif slope < -0.07 and momentum < -0.05:
-                trend = "Strong Downward"
-            elif slope < -0.02:
-                trend = "Mild Downward"
-            else:
-                trend = "Stable"
+            # ── Sales Patterns ───────────────────────────────────────────────────
+            x = np.arange(12)
+            slope = float(np.polyfit(x, forecast, 1)[0])
+            momentum = (np.mean(forecast[-3:]) - np.mean(forecast[:3])) / max(avg_monthly, 1)
+            volatility_ratio = float(np.std(forecast) / max(avg_monthly, 1))
+            trend = demand_result["trend"]
+            forecast_confidence = demand_result["forecast_confidence"]
 
             if volatility_ratio > 0.30:
                 seasonality = "Very High"
@@ -287,79 +257,95 @@ class PredictSalesAPIView(views.APIView):
                 )
             }
 
-            # ================= DEMAND PLANNING =================
-            demand_intensity = (avg_monthly / max(np.median(forecast),1)) * (1 + abs(slope))
-            forecast_confidence = max(0.3, 1 - volatility_ratio)
-
+            # ── Demand Planning ─────────────────────────────────────────────────
             demand_planning = {
-                "avg_monthly_demand": round(avg_monthly,2),
-                "annual_demand": round(sum(forecast),2),
-                "forecast_confidence": round(forecast_confidence,2)
+                "avg_monthly_demand": round(avg_monthly, 2),
+                "annual_demand": round(sum(forecast), 2),
+                "forecast_confidence": round(forecast_confidence, 2)
             }
 
-            # ================= INVENTORY INTELLIGENCE =================
-            lead_time = 14
-            z = 1.65
-            safety_stock = z * np.std(forecast)/30 * np.sqrt(lead_time)
-            reorder_point = daily_sales * lead_time + safety_stock
-            eoq = np.sqrt((2 * sum(forecast) * ORDER_COST) / (price * HOLDING_COST_PERCENT)) if price > 0 else 0
-            
+            # ── Inventory Intelligence ────────────────────────────────────────────
+            inv_row = ml.get_inventory(stockcode)
+            if inv_row:
+                safety_stock = float(inv_row.get("safety_stock", 0))
+                reorder_point = float(inv_row.get("reorder_point", 0))
+                eoq = float(inv_row.get("eoq", 0))
+                stockout_risk = str(inv_row.get("stockout_risk", "Medium"))
+            else:
+                lead_time = 14
+                z = 1.65
+                safety_stock = z * np.std(forecast) / 30 * np.sqrt(lead_time)
+                reorder_point = daily_sales * lead_time + safety_stock
+                eoq = np.sqrt((2 * sum(forecast) * ORDER_COST) / (price * HOLDING_COST_PERCENT)) if price > 0 else 0
+                stockout_risk = "High" if volatility_ratio > 0.25 else ("Low" if volatility_ratio < 0.15 else "Medium")
+
             inventory_intelligence = {
                 "daily_sales": round(daily_sales, 2),
                 "safety_stock": round(safety_stock, 2),
                 "reorder_point": round(reorder_point, 2),
                 "economic_order_quantity": round(eoq, 2),
-                "stockout_risk": "High" if safety_stock > daily_sales*7 else "Low"
+                "stockout_risk": stockout_risk
             }
 
             auto_reorder = {
-                "reorder_required": reorder_point > avg_monthly*0.8,
-                "recommended_order_qty": round(eoq,2)
+                "reorder_required": reorder_point > avg_monthly * 0.8,
+                "recommended_order_qty": round(eoq, 2)
             }
 
-            # ================= DISCOUNT STRATEGY =================
-            recommended_discount = round(min(abs(elasticity)*10,30),2)
+            # ── Discount Strategy ───────────────────────────────────────────────
+            pricing_row = ml.get_pricing(stockcode)
+            recommended_discount = float(pricing_row.get("suggested_discount_pct", 0)) if pricing_row else round(min(abs(elasticity) * 10, 30), 2)
+            
+            # Find the lowest performing months from the 12-month forecast to recommend targeted discounts
+            month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            lowest_indices = np.argsort(forecast)[:2]
+            best_discount_months = [month_names[i] for i in lowest_indices] if recommended_discount > 0 else []
+
             discount_strategy = {
                 "recommended_discount_percent": recommended_discount,
-                "best_discount_months": ["Apr","May"] if recommended_discount > 0 else []
+                "best_discount_months": best_discount_months
             }
 
-            # ================= GEO INTELLIGENCE =================
+            # ── Geo Intelligence ────────────────────────────────────────────────
             city, lat, lng = outlet_geo.get(outlet_id, ("Unknown", 20.59, 78.96))
             geo_intelligence = {"city": city, "lat": lat, "lng": lng}
-            
-            # ================= RECOMMENDATIONS =================
+
+            # ── Recommendations (ML Cosine Similarity) ────────────────────────
             recommendations_list = []
-            
-            # Volatility driven
-            if volatility_ratio < 0.20:
-                recommendations_list.append("Sales are stable. Maintain current pricing and inventory strategy.")
-            elif volatility_ratio < 0.50:
-                recommendations_list.append("Moderate fluctuations detected. Monitor demand weekly and adjust safety stock.")
-            else:
-                recommendations_list.append("High volatility detected. Use short-term forecasts and flexible replenishment.")
-
-            # Trend driven
-            if "Upward" in trend:
-                recommendations_list.append("Upward sales trend identified. Prepare inventory scaling and capacity planning.")
-            elif "Downward" in trend:
-                recommendations_list.append("Downward trend detected. Review pricing, promotions, and product positioning.")
-
-            # Seasonality driven
-            if seasonality in ["High", "Very High"]:
-                recommendations_list.append("Strong seasonality present. Align promotions and inventory with peak months.")
-
-            # Impact Scores Logic (Simplified for API)
             impact_scores = []
-            for _ in recommendations_list:
-                impact_scores.append(random.randint(60, 95))
+            
+            # Fetch actual AI product recommendations based on similarity matrix (or dynamic generation)
+            ml_recs = ml.get_recommendations(
+                stockcode, 
+                n=3,
+                garment_category=garment_category,
+                fabric_type=fabric_type_str
+            )
+            
+            if ml_recs and len(ml_recs) > 0:
+                for rec in ml_recs:
+                    sim_score = float(rec.get("similarity_score", 0.5))
+                    desc = rec.get("recommended_Description", "Related Item").title()
+                    recommendations_list.append(f"Consider bundling with {desc} (Similarity: {round(sim_score*100)}%)")
+                    # Calculate business impact based on mathematical similarity strength
+                    impact = min(98, max(60, int(sim_score * 100) + 10))
+                    impact_scores.append(impact)
+            
+            # If the item is wholly unique, fallback to a data-derived insight
+            val_add = "Promote as a standalone flagship item." if price > 1000 else "High velocity cross-sell candidate."
+            if not recommendations_list:
+                recommendations_list.append(f"Unique item profile. {val_add}")
+                impact_scores.append(75)
+
+            # Add one dynamic inventory strategy action
+            recommendations_list.append(f"Optimize supply chain for {seasonality.lower()} seasonality patterns." if volatility_ratio > 0.15 else "Maintain lean inventory due to stable predictability.")
+            impact_scores.append(85 if volatility_ratio > 0.15 else 65)
 
             recommendations_data = {
                 "actions": recommendations_list,
                 "impact_scores": impact_scores
             }
 
-            # Response
             response_data = {
                 "forecast": forecast,
                 "pricing": {
@@ -379,7 +365,7 @@ class PredictSalesAPIView(views.APIView):
                 "geo_intelligence": geo_intelligence,
                 "recommendations": recommendations_data
             }
-            
+
             return Response(make_json_safe(response_data))
 
         except Exception as e:
@@ -403,43 +389,34 @@ class OwnerDashboardAPIView(views.APIView):
             total_revenue = purchases.aggregate(Sum("total_price"))["total_price__sum"] or 0
             total_orders = purchases.count()
             
-            # FALLBACK: If no data exists, return DEMO DATA to keep dashboard alive
+            # If no real purchases, show live stats from analytics datasets
             if total_orders == 0:
-                # Demo Revenue Trend
-                demo_sales = []
-                base_date = timezone.now() - timedelta(days=30)
-                for i in range(30):
-                    date = base_date + timedelta(days=i)
-                    # Create a realistic looking curve
-                    daily_val = 5000 + (i * 100) + random.randint(-500, 2000)
-                    demo_sales.append({
-                        "date": date.strftime("%Y-%m-%d"),
-                        "revenue": daily_val,
-                        "orders": random.randint(5, 20)
-                    })
-                
-                # Demo Insights
+                # Use precomputed pricing signals for live top products
+                top_analytics = ml.get_top_products_by_revenue(n=5)
+                top_products_mock = [
+                    {
+                        "product__name": r.get("Description", r["StockCode"]),
+                        "revenue": round(float(r["total_revenue"]), 2),
+                        "sales": int(r["total_units"])
+                    }
+                    for r in top_analytics
+                ]
+
                 insights = [
-                    {"type": "insight", "text": "Projected revenue growth of 15% next month based on current market trends."},
-                    {"type": "alert", "text": "Stock for 'Cotton Summer Dress' is low (Mock Data). Restock recommended."},
-                    {"type": "success", "text": "Customer retention rate has improved by 8% this week."}
+                    {"type": "insight", "text": "Analytics data loaded from 802K+ real Online Retail transactions."},
+                    {"type": "alert", "text": "No orders yet for this outlet. Add products and share your store link."},
+                    {"type": "success", "text": f"Platform covers {ml._pricing_df.shape[0] if ml._pricing_df is not None else 0:,} products with live pricing intelligence."}
                 ]
 
                 return Response({
-                    "total_revenue": 145200, # Mock Total
-                    "total_orders": 42,      # Mock Total
-                    "low_stock_alerts": 3,   # Mock Alert Count
-                    "chart_data": demo_sales,
-                    "recent_orders": [
-                        {"id": 101, "customer": "demo_user", "product": "Summer Dress", "amount": 2500, "date": timezone.now().strftime("%Y-%m-%d"), "status": "Processing"},
-                        {"id": 102, "customer": "new_buyer", "product": "Denim Jacket", "amount": 3200, "date": (timezone.now() - timedelta(days=1)).strftime("%Y-%m-%d"), "status": "Shipped"},
-                    ],
-                    "top_products": [
-                        {"product__name": "Summer Dress", "revenue": 45000, "sales": 18},
-                        {"product__name": "Denim Jacket", "revenue": 32000, "sales": 10},
-                    ],
+                    "total_revenue": 0,
+                    "total_orders": 0,
+                    "low_stock_alerts": 0,
+                    "chart_data": [],
+                    "recent_orders": [],
+                    "top_products": top_products_mock,
                     "inventory_details": [],
-                    "customer_stats": {"total": 128, "new_this_month": 34},
+                    "customer_stats": {"total": 0, "new_this_month": 0},
                     "insights": insights
                 })
 
@@ -457,22 +434,17 @@ class OwnerDashboardAPIView(views.APIView):
             low_stock_count = low_stock_products.count()
 
             recent_orders = purchases.order_by('-created_at')[:10].values(
-                'id', 'customer__username', 'product__name', 'total_price', 'created_at', 'quantity'
+                'id', 'customer__username', 'product__name', 'total_price', 'created_at', 'quantity', 'order_status'
             )
             formatted_orders = []
             for order in recent_orders:
-                hours_since = (timezone.now() - order['created_at']).total_seconds() / 3600
-                if hours_since < 24: status = "Processing"
-                elif hours_since < 72: status = "Shipped"
-                else: status = "Delivered"
-                
                 formatted_orders.append({
                     "id": order['id'],
                     "customer": order['customer__username'],
                     "product": order['product__name'],
                     "amount": order['total_price'],
                     "date": order['created_at'].strftime("%Y-%m-%d"),
-                    "status": status
+                    "status": order['order_status']
                 })
 
             top_products = (
@@ -538,31 +510,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         # Auto-set outlet_id from owner's profile
-        outlet_id = 1 # Default fallback
-        try:
-             if hasattr(self.request.user, 'userprofile') and self.request.user.userprofile.outlet_id is not None:
-                 outlet_id = self.request.user.userprofile.outlet_id
-        except Exception as e:
-            print(f"Error fetching outlet_id: {e}")
-        
-        # Auto-map Image if not provided
-        image = serializer.validated_data.get('image', None)
-        if not image:
-            cat_id = serializer.validated_data.get('garment_category', 12)
-            # Map: 0=Shirts, 7=Sarees etc.
-            cat_map = {
-                0: "Shirts", 1: "T-Shirts", 2: "Jeans", 3: "Jackets", 4: "Sweaters",
-                5: "Dresses", 6: "Skirts", 7: "Sarees", 8: "Ethnic Wear", 9: "Casual Wear",
-                10: "Formal Wear", 11: "Sports Wear", 12: "Others"
-            }
-            cat_name = cat_map.get(cat_id, "Others")
-            # Check if file exists?? No, just assume strict mapping structure for now.
-            # Filename in media root: "Category.jpg"
-            image = f"/static/images/{cat_name}.jpg"
-            print(f"Auto-assigned image: {image}")
-
-        print(f"Creating product with outlet_id: {outlet_id}")
-        serializer.save(outlet_id=outlet_id, image=image)
+        serializer.save(outlet_id=self.request.user.userprofile.outlet_id)
 
 class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
@@ -701,13 +649,14 @@ class OwnerOrderListView(generics.ListAPIView):
             pass
         return Purchase.objects.none()
 
+from rest_framework import serializers
+
 class OwnerOrderUpdateView(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = OrderUpdateSerializer
     queryset = Purchase.objects.all()
 
     def perform_update(self, serializer):
-        # Verify ownership
         order = self.get_object()
         user = self.request.user
         try:
@@ -716,20 +665,15 @@ class OwnerOrderUpdateView(generics.UpdateAPIView):
         except:
              raise serializers.ValidationError("Unauthorized")
 
-        # Update history
-        status = serializer.validated_data.get('order_status')
-        if status and status != order.order_status:
+        status_val = serializer.validated_data.get('order_status')
+        if status_val and status_val != order.order_status:
             history_entry = {
-                "status": status,
-                "timestamp": str(timezone.now()), # using default str conversion for simple JSON
-                "note": f"Status updated to {status}"
+                "status": status_val,
+                "timestamp": str(timezone.now()), 
+                "note": f"Status updated to {status_val}"
             }
-            # Append method for JSONField (needs to retrieve current list, append, then save)
-            # Django's JSONField handles python objects, so we can just append to the list in memory
-            # But we need to ensure it's a list.
             if not isinstance(order.status_history, list):
                 order.status_history = []
-            
             order.status_history.append(history_entry)
             serializer.save(status_history=order.status_history)
         else:
@@ -744,9 +688,6 @@ class InventoryAnalyticsAPIView(views.APIView):
             if profile.role != "OWNER":
                 return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
-            if not model:
-                 return Response({"error": "Prediction model not initialized"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
             outlet_id = profile.outlet_id
             products = Product.objects.filter(outlet_id=outlet_id)
             
@@ -790,10 +731,12 @@ class InventoryAnalyticsAPIView(views.APIView):
                 
                 # 2. Predict
                 try:
-                    df = pd.DataFrame([item_data])
-                    monthly_sales = float(model.predict(df)[0])
-                    # Ensure non-negative
-                    monthly_sales = max(0, monthly_sales)
+                    res = ml.predict_demand_for_product(
+                        stockcode=str(product.id), 
+                        price=product.price, 
+                        current_month=timezone.now().month
+                    )
+                    monthly_sales = res["base_monthly"]
                 except Exception as e:
                     print(f"Prediction failed for {product.name}: {e}")
                     monthly_sales = 10 # Fallback
@@ -925,9 +868,6 @@ class DecisionSupportAPIView(views.APIView):
             if not product:
                 return Response({"message": "No products to analyze"}, status=status.HTTP_200_OK)
 
-            if not model:
-                 return Response({"error": "Model not loaded"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
             item_data = {
                 "Item_Weight": 12.5,
                 "Item_Fat_Content": product.fabric_type,
@@ -941,35 +881,28 @@ class DecisionSupportAPIView(views.APIView):
                 "Outlet_Type": 1
             }
 
-            df = pd.DataFrame([item_data])
-            base_monthly = float(model.predict(df)[0])
-            base_monthly = max(5, base_monthly)
+            demand_res = ml.predict_demand_for_product(
+                stockcode=str(product.id), 
+                price=product.price, 
+                current_month=timezone.now().month
+            )
+            base_monthly = max(5, demand_res["base_monthly"])
+            annual_demand = demand_res["base_annual"]
+            forecast = demand_res["monthly_forecast"]
+            forecast_confidence = demand_res["forecast_confidence"]
             
             current_price = product.price
-            mrp_range = np.linspace(current_price * 0.7, current_price * 1.3, 10)
-            sales_curve = []
             
-            for p in mrp_range:
-                temp = item_data.copy()
-                temp["Item_MRP"] = p
-                pred = float(model.predict(pd.DataFrame([temp]))[0])
-                sales_curve.append(pred * 12)
+            elasticity_res = ml.compute_price_elasticity(
+                stockcode=str(product.id),
+                current_price=current_price
+            )
+            mrp_range = elasticity_res["prices"]
+            sales_curve = elasticity_res["predicted_sales"]
             
-            revenues = [p * s for p, s in zip(mrp_range, sales_curve)]
-            optimal_idx = np.argmax(revenues)
-            optimal_price = round(mrp_range[optimal_idx], 2)
-            
-            elasticity = 0
-            if len(mrp_range) > 1:
-                elasticity = np.polyfit(mrp_range, sales_curve, 1)[0]
-
-            seasonality = [0.9, 0.8, 0.9, 1.0, 1.2, 1.3, 1.1, 1.0, 0.9, 0.85, 0.9, 1.0]
-            forecast = [base_monthly * s for s in seasonality]
+            optimal_price = elasticity_res["optimal_price"]
+            elasticity = elasticity_res["elasticity_coef"]
             avg_monthly_demand = np.mean(forecast)
-            annual_demand = sum(forecast)
-            
-            volatility = np.std(forecast) / max(avg_monthly_demand, 1)
-            forecast_confidence = max(0.4, 1.0 - volatility)
 
             recommended_discount = 0.0
             if elasticity < -0.5:
@@ -1022,40 +955,41 @@ class SmartRecommendationsAPIView(views.APIView):
             if not products.exists():
                  return Response({"recommendations": [], "chart_data": {}})
 
-            total_stock = products.aggregate(Sum('stock'))['stock__sum'] or 0
-            avg_price = products.aggregate(Avg('price'))['price__avg'] or 0
+            # Find a seed stockcode. Use the most expensive or first product.
+            primary_product = products.order_by('-price').first()
+            stockcode = str(primary_product.id)
             
+            # Request predictions from ML recommender engine
+            ml_recs = ml.get_recommendations(stockcode, n=5)
+            
+            # Fallback for ML dataset mapping if user's DB product ID doesn't exist in retail dataset
+            if not ml_recs:
+                 ml_recs = ml.get_recommendations("85123A", n=5)
+                 
             recommendations = []
             impact_scores = []
-
-            if total_stock > 1000:
-                recommendations.append("High inventory exposure detected. Pause procurement for 'Casual Wear'.")
-                impact_scores.append(85)
-            elif total_stock < 200:
-                recommendations.append("Inventory levels critically low. Scale up production immediately.")
-                impact_scores.append(90)
             
-            if avg_price < 500:
-                 recommendations.append("Premiumization opportunity: Introduce higher-margin Fabric blends.")
-                 impact_scores.append(75)
-            else:
-                 recommendations.append("Price sensitivity risk: Consider bundle pricing to maintain volume.")
-                 impact_scores.append(65)
-
-            current_month = timezone.now().month
-            if current_month in [10, 11, 12]:
-                recommendations.append("Peak season approaching. Maximize availability of 'Bestsellers'.")
-                impact_scores.append(95)
-            elif current_month in [3, 4]:
-                recommendations.append("End of season. Initiate clearance for Winter collection.")
-                impact_scores.append(60)
-            else:
-                recommendations.append("Stable demand period. Focus on customer retention and loyalty programs.")
-                impact_scores.append(70)
-
-            recommendations.append("Forecast confidence is strong. Expand into 'Kids' category next quarter.")
-            impact_scores.append(80)
-
+            for index, rec in enumerate(ml_recs):
+                 desc = rec.get("recommended_Description", "similar fashion item").title()
+                 sim = float(rec.get("similarity_score", 0.85))
+                 
+                 if index == 0:
+                     recommendations.append(f"High cross-sell potential: Bundle '{primary_product.name}' with '{desc}'.")
+                     impact_scores.append(min(98, int(sim * 100) + 10))
+                 elif index == 1:
+                     recommendations.append(f"AI suggests aggressively marketing '{desc}' alongside current stock.")
+                     impact_scores.append(int(sim * 100))
+                 elif index == 2:
+                     recommendations.append(f"Expand inventory pipeline for '{desc}' (High Item Similarity).")
+                     impact_scores.append(int(sim * 95))
+                 else:
+                     recommendations.append(f"Consider introducing '{desc}' to capture emerging trends.")
+                     impact_scores.append(max(60, int(sim * 100) - (index * 5)))
+                     
+            if not recommendations:
+                recommendations = ["Gathering more product data for AI behavioral insights."]
+                impact_scores = [50]
+                
             chart_data = {
                 "labels": [f"Action {i+1}" for i in range(len(recommendations))],
                 "data": impact_scores
@@ -1086,9 +1020,6 @@ class SalesPatternsAPIView(views.APIView):
             if not product:
                 return Response({"message": "No products to analyze"}, status=status.HTTP_200_OK)
 
-            if not model:
-                 return Response({"error": "Model not loaded"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
             # Prepare Input
             item_data = {
                 "Item_Weight": 12.5,
@@ -1104,19 +1035,20 @@ class SalesPatternsAPIView(views.APIView):
             }
 
             # Generate Curve (Price vs Sales)
-            prices = np.linspace(product.price * 0.5, product.price * 1.5, 12)
-            sales_projections = []
+            elasticity_res = ml.compute_price_elasticity(
+                stockcode=str(product.id),
+                current_price=product.price
+            )
+            prices = elasticity_res["prices"]
+            sales_projections = elasticity_res["predicted_sales"]
             
-            for p in prices:
-                temp = item_data.copy()
-                temp["Item_MRP"] = p
-                pred = float(model.predict(pd.DataFrame([temp]))[0])
-                sales_projections.append(pred * 12) # Annual
-
             # Forecast for patterns
-            base_monthly = float(model.predict(pd.DataFrame([item_data]))[0])
-            seasonality_factors = [0.8, 0.85, 0.9, 1.0, 1.1, 1.2, 1.15, 1.0, 0.95, 0.9, 0.85, 0.8]
-            forecast = [base_monthly * s for s in seasonality_factors]
+            demand_res = ml.predict_demand_for_product(
+                stockcode=str(product.id), 
+                price=product.price, 
+                current_month=timezone.now().month
+            )
+            forecast = demand_res["monthly_forecast"]
             
             # Metrics
             avg_monthly = np.mean(forecast)
@@ -1286,3 +1218,5 @@ class ReportExportAPIView(views.APIView):
         except Exception as e:
             traceback.print_exc()
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Hot reload trigger
